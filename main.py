@@ -1,13 +1,9 @@
-#Creator: Daniel Escobar
-
 import tkinter as tk
-from contextlib import nullcontext
 import customtkinter as ctk
 import datetime
 import re
 from pathlib import Path
 import fitz  # PyMuPDF
-from customtkinter import CTkLabel
 
 # Apollo Form Filler
 
@@ -27,22 +23,26 @@ def main():
 
     app = ctk.CTk()
 
-    # Window size
-    window_width = 650
-    window_height = 1000
-
-    # Get screen width and height
+    # Obtener el tamaño de la pantalla
     screen_width = app.winfo_screenwidth()
     screen_height = app.winfo_screenheight()
 
-    # Calculate position to center the window
+    # Establecer el tamaño de la ventana como un porcentaje del tamaño de la pantalla
+    window_width = int(screen_width * 0.8)  # 80% del ancho de la pantalla
+    window_height = int(screen_height * 0.8)  # 80% del alto de la pantalla
+
+    # Calcular la posición para centrar la ventana
     position_top = int((screen_height / 2) - (window_height / 2))
     position_right = int((screen_width / 2) - (window_width / 2))
 
     app.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
     app.title("Apollo Form Filler")
 
-    # Create main container with canvas and scrollbar
+    # Configurar el redimensionamiento de la ventana
+    app.grid_rowconfigure(0, weight=1)
+    app.grid_columnconfigure(0, weight=1)
+
+    # Crear el contenedor principal con Canvas y Scrollbar
     main_frame = ctk.CTkFrame(app)
     main_frame.pack(fill="both", expand=True)
 
@@ -50,15 +50,25 @@ def main():
     scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=canvas.yview)
 
     scrollable_frame = ctk.CTkFrame(canvas)
-    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
 
-    canvas_frame = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
 
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Function to create input fields
+    # Habilitar el scroll con la rueda del mouse
+    def on_mouse_wheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    # Vincular el evento del scroll del mouse al Canvas
+    canvas.bind_all("<MouseWheel>", on_mouse_wheel)
+
+    # Función para crear campos de entrada
     def inputField(labelName):
         frame = ctk.CTkFrame(scrollable_frame)
         frame.pack(fill='x', pady=5)
@@ -75,11 +85,9 @@ def main():
     labelTitle = ctk.CTkLabel(scrollable_frame, text="PDF Form Filler")
     labelTitle.pack()
 
-    # Checkboxes for contract selection
+    # Checkboxes para selección de contrato
     contract_vars = {}
-    estimated_totals = {}  # Store estimated total inputs for each contract
-
-
+    estimated_totals = {}  # Almacenar entradas de totales estimados para cada contrato
 
     for contract_name in contracts.keys():
         contract_vars[contract_name] = tk.BooleanVar()
@@ -89,7 +97,8 @@ def main():
 
     labelTitle2 = ctk.CTkLabel(scrollable_frame, text="Form Fields")
     labelTitle2.pack()
-    # Standard form fields
+
+    # Campos del formulario estándar
     insureName = inputField("Insured Name")
     address = inputField("Address")
     city = inputField("City")
@@ -129,9 +138,9 @@ def main():
             'On_Behalf': OnBehalf.get(),
         }
 
-        # Generate a separate PDF for each selected contract
+        # Generar un PDF separado para cada contrato seleccionado
         for contractName, contract_path in contracts.items():
-            if contract_vars[contractName].get():  # Only process selected contracts
+            if contract_vars[contractName].get():  # Solo procesar contratos seleccionados
                 form_data = base_form_data.copy()
                 form_data['Estimated_Total'] = estimated_totals[contractName].get()
                 FieldFilling(document_dir, contract_path, form_data, contractName)
