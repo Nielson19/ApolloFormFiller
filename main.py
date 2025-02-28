@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog  # Importar filedialog para seleccionar la ubicación
 import customtkinter as ctk
 import datetime
 import re
@@ -138,12 +139,22 @@ def main():
             'On_Behalf': OnBehalf.get(),
         }
 
+        # Preguntar al usuario dónde guardar el archivo
+        output_file = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF Files", "*.pdf")],
+            title="Guardar archivo PDF como"
+        )
+
+        if not output_file:  # Si el usuario cancela el diálogo
+            return
+
         # Generar un PDF separado para cada contrato seleccionado
         for contractName, contract_path in contracts.items():
             if contract_vars[contractName].get():  # Solo procesar contratos seleccionados
                 form_data = base_form_data.copy()
                 form_data['Estimated_Total'] = estimated_totals[contractName].get()
-                FieldFilling(document_dir, contract_path, form_data, contractName)
+                FieldFilling(document_dir, contract_path, form_data, contractName, output_file)
 
     generateButton = ctk.CTkButton(scrollable_frame, text="Generate Form", command=generateForm)
     generateButton.pack()
@@ -158,7 +169,7 @@ def format_phone_number(phone):
     return phone
 
 
-def FieldFilling(document_dir, source_file_name, form_data, contract_name):
+def FieldFilling(document_dir, source_file_name, form_data, contract_name, output_file):
     with fitz.open(document_dir / source_file_name) as doc:
         filled = False
         for page in doc:
@@ -179,11 +190,10 @@ def FieldFilling(document_dir, source_file_name, form_data, contract_name):
                         filled = True
 
         if filled:
-            output_dir = document_dir / 'OutputForms'
+            output_dir = Path(output_file).parent
             output_dir.mkdir(parents=True, exist_ok=True)
-            outputFileName = output_dir / f"{form_data['Insured']} - {contract_name}.pdf"
-            doc.save(outputFileName)
-            print(f"Updated PDF saved as {outputFileName}")
+            doc.save(output_file)
+            print(f"Updated PDF saved as {output_file}")
         else:
             print(f"No fields were updated for {contract_name}")
 
