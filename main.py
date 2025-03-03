@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog  # Importar filedialog para seleccionar la ubicación
 import customtkinter as ctk
 import datetime
 import re
 from pathlib import Path
 import fitz  # PyMuPDF
+import os  # Para obtener rutas
 
 # Apollo Form Filler
 
@@ -19,8 +19,9 @@ def main():
         "Mold Contract 2025": "Templates/MOLD APOLLO 2025.pdf",
     }
 
-    ctk.set_appearance_mode("System")
-    ctk.set_default_color_theme("blue")
+    # Configurar el modo de apariencia y el tema
+    ctk.set_appearance_mode("System")  # Puedes usar "Light" o "Dark"
+    ctk.set_default_color_theme("blue")  # Tema azul predeterminado
 
     app = ctk.CTk()
 
@@ -83,7 +84,7 @@ def main():
 
         return value
 
-    labelTitle = ctk.CTkLabel(scrollable_frame, text="PDF Form Filler")
+    labelTitle = ctk.CTkLabel(scrollable_frame, text="PDF Form Filler", font=("Arial", 16))
     labelTitle.pack()
 
     # Checkboxes para selección de contrato
@@ -96,7 +97,7 @@ def main():
         checkbox.pack()
         estimated_totals[contract_name] = inputField(f"Estimated Total for {contract_name}")
 
-    labelTitle2 = ctk.CTkLabel(scrollable_frame, text="Form Fields")
+    labelTitle2 = ctk.CTkLabel(scrollable_frame, text="Form Fields", font=("Arial", 14))
     labelTitle2.pack()
 
     # Campos del formulario estándar
@@ -139,24 +140,27 @@ def main():
             'On_Behalf': OnBehalf.get(),
         }
 
-        # Preguntar al usuario dónde guardar el archivo
-        output_file = filedialog.asksaveasfilename(
-            defaultextension=".pdf",
-            filetypes=[("PDF Files", "*.pdf")],
-            title="Guardar archivo PDF como"
-        )
+        # Obtener la ruta del escritorio del usuario actual
+        desktop_dir = Path(os.path.expanduser("~")) / "Desktop"
 
-        if not output_file:  # Si el usuario cancela el diálogo
-            return
+        # Crear una carpeta en el escritorio con el nombre del cliente
+        client_name = base_form_data['Insured'].strip()  # Nombre del cliente
+        output_dir = desktop_dir / client_name
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generar un PDF separado para cada contrato seleccionado
+        # Generar un archivo PDF para cada contrato seleccionado
         for contractName, contract_path in contracts.items():
             if contract_vars[contractName].get():  # Solo procesar contratos seleccionados
                 form_data = base_form_data.copy()
                 form_data['Estimated_Total'] = estimated_totals[contractName].get()
-                FieldFilling(document_dir, contract_path, form_data, contractName, output_file)
 
-    generateButton = ctk.CTkButton(scrollable_frame, text="Generate Form", command=generateForm)
+                # Generar el nombre del archivo
+                output_file = output_dir / f"{contractName}.pdf"
+
+                # Llenar y guardar el PDF
+                FieldFilling(document_dir, contract_path, form_data, output_file)
+
+    generateButton = ctk.CTkButton(scrollable_frame, text="Generate Form")
     generateButton.pack()
 
     app.mainloop()
@@ -169,7 +173,7 @@ def format_phone_number(phone):
     return phone
 
 
-def FieldFilling(document_dir, source_file_name, form_data, contract_name, output_file):
+def FieldFilling(document_dir, source_file_name, form_data, output_file):
     with fitz.open(document_dir / source_file_name) as doc:
         filled = False
         for page in doc:
@@ -190,12 +194,10 @@ def FieldFilling(document_dir, source_file_name, form_data, contract_name, outpu
                         filled = True
 
         if filled:
-            output_dir = Path(output_file).parent
-            output_dir.mkdir(parents=True, exist_ok=True)
             doc.save(output_file)
-            print(f"Updated PDF saved as {output_file}")
+            print(f"Archivo PDF guardado como {output_file}")
         else:
-            print(f"No fields were updated for {contract_name}")
+            print(f"No fields were updated for {output_file}")
 
 
 if __name__ == "__main__":
