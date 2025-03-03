@@ -1,22 +1,36 @@
 import tkinter as tk
+from tkinter import messagebox
 import customtkinter as ctk
 import datetime
 import re
 from pathlib import Path
 import fitz  # PyMuPDF
-import os  # Para obtener rutas
+import os
+import sys  # Para manejar rutas en PyInstaller
+
+# Función para obtener la ruta correcta de los recursos
+def get_resource_path(relative_path):
+    """Obtiene la ruta absoluta al recurso, funciona para desarrollo y para PyInstaller."""
+    try:
+        # PyInstaller crea una carpeta temporal y almacena la ruta en _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # Apollo Form Filler
 
 def main():
     document_dir = Path('.')
 
+    # Rutas de los contratos usando get_resource_path
     contracts = {
-        "Apollo Contract 2025": "Templates/EMPTY APOLLO 2025 - CONTRACT.pdf",
-        "Flood Contract 2025": "Templates/FLOOD APOLLO 2025 - FINAL CONTRACT.pdf",
-        "Tarp Contract 2025": "Templates/TARP APOLLO 2025.pdf",
-        "WM Contract 2025": "Templates/WM APOLLO 2025.pdf",
-        "Mold Contract 2025": "Templates/MOLD APOLLO 2025.pdf",
+        "Apollo Contract 2025": get_resource_path("Templates/EMPTY APOLLO 2025 - CONTRACT.pdf"),
+        "Flood Contract 2025": get_resource_path("Templates/FLOOD APOLLO 2025 - FINAL CONTRACT.pdf"),
+        "Tarp Contract 2025": get_resource_path("Templates/TARP APOLLO 2025.pdf"),
+        "WM Contract 2025": get_resource_path("Templates/WM APOLLO 2025.pdf"),
+        "Mold Contract 2025": get_resource_path("Templates/MOLD APOLLO 2025.pdf"),
     }
 
     # Configurar el modo de apariencia y el tema
@@ -141,7 +155,7 @@ def main():
         }
 
         # Obtener la ruta del escritorio del usuario actual
-        desktop_dir = Path(os.path.expanduser("~")) / "Desktop"
+        desktop_dir = Path(os.path.expanduser("~")) / "Contratos Apollo"
 
         # Crear una carpeta en el escritorio con el nombre del cliente
         client_name = base_form_data['Insured'].strip()  # Nombre del cliente
@@ -154,13 +168,31 @@ def main():
                 form_data = base_form_data.copy()
                 form_data['Estimated_Total'] = estimated_totals[contractName].get()
 
+                # Verificar si el archivo PDF existe
+                if not os.path.exists(contract_path):
+                    messagebox.showwarning(
+                        "Archivo no encontrado",
+                        f"No se encontró el archivo PDF para {contractName}.\nRuta esperada: {contract_path}"
+                    )
+                    continue  # Saltar al siguiente contrato
+
                 # Generar el nombre del archivo
                 output_file = output_dir / f"{contractName}.pdf"
 
                 # Llenar y guardar el PDF
-                FieldFilling(document_dir, contract_path, form_data, output_file)
+                try:
+                    FieldFilling(document_dir, contract_path, form_data, output_file)
+                    messagebox.showinfo(
+                        "Archivo Generado",
+                        f"El archivo se ha guardado en:\n{output_file}"
+                    )
+                except Exception as e:
+                    messagebox.showerror(
+                        "Error",
+                        f"No se pudo generar el archivo PDF para {contractName}.\nError: {e}"
+                    )
 
-    generateButton = ctk.CTkButton(scrollable_frame, text="Generate Form")
+    generateButton = ctk.CTkButton(scrollable_frame, text="Generate Form", command=generateForm)
     generateButton.pack()
 
     app.mainloop()
@@ -174,7 +206,7 @@ def format_phone_number(phone):
 
 
 def FieldFilling(document_dir, source_file_name, form_data, output_file):
-    with fitz.open(document_dir / source_file_name) as doc:
+    with fitz.open(source_file_name) as doc:
         filled = False
         for page in doc:
             for field in page.widgets():
