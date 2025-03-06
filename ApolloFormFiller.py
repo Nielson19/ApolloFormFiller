@@ -20,6 +20,7 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Apollo Form Filler
+messagebox.showinfo("Welcome", "Have a nice day Cielo, in behalf of Daniel and Junior 😊")
 
 def main():
     document_dir = Path('.')
@@ -127,11 +128,7 @@ def main():
     dateOfLoss = inputField("Date of Loss")
     PolicyNumber = inputField("Policy Number")
     ClaimNumber = inputField("Claim Number")
-    ClientName = inputField("Client Name")
-    ClientName2 = inputField("Client Name 2")
-    ClientName3 = inputField("Client Name 3")
-    SignatureDate = inputField("Signature Date")
-    OnBehalf = inputField("On Behalf")
+
 
     def generateForm():
         base_form_data = {
@@ -147,11 +144,6 @@ def main():
             'Date_of_Loss': dateOfLoss.get(),
             'Policy_Num': PolicyNumber.get(),
             'Claim_Num': ClaimNumber.get(),
-            'Client_Name': ClientName.get(),
-            'Client_Name_2': ClientName2.get(),
-            'Client_Name_3': ClientName3.get(),
-            'Date_2': SignatureDate.get(),
-            'On_Behalf': OnBehalf.get(),
         }
 
         # Obtener la ruta del escritorio del usuario actual
