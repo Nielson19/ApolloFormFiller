@@ -96,6 +96,11 @@ def main():
         value = tk.StringVar()
         inputSpace = ctk.CTkEntry(frame, width=350, height=40, textvariable=value)
         inputSpace.pack(side='right', padx=10, pady=2)
+        if labelName in ["Estimated Total for Flood Contract 2025", 
+                     "Estimated Total for Tarp Contract 2025", 
+                     "Estimated Total for WM Contract 2025", 
+                     "Estimated Total for Mold Contract 2025"]:
+            inputSpace.configure(state='disabled')
 
         return value
 
