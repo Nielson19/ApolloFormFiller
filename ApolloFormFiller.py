@@ -32,7 +32,7 @@ def main():
         "Tarp Contract 2025": get_resource_path("Templates/TARP APOLLO 2025.pdf"),
         "WM Contract 2025": get_resource_path("Templates/WM APOLLO 2025.pdf"),
         "Mold Contract 2025": get_resource_path("Templates/MOLD APOLLO 2025.pdf"),
-        "FMS CONTRACT LOP": get_resource_path("Templates/FMS CONTRACT LOP.pdf"),
+        "COC Form 2025": get_resource_path("Templates/COC APOLLO 2025.pdf"),
     }
 
     # Configurar el modo de apariencia y el tema
@@ -101,7 +101,7 @@ def main():
                      "Estimated Total for Tarp Contract 2025", 
                      "Estimated Total for WM Contract 2025", 
                      "Estimated Total for Mold Contract 2025", 
-                     "Estimated Total for FMS CONTRACT LOP"]:
+                     "Estimated Total for COC Form 2025"]:
             inputSpace.configure(state='disabled')
 
         return value
