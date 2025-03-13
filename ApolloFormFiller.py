@@ -135,12 +135,12 @@ def main():
     dateOfLoss = inputField("Date of Loss")
     PolicyNumber = inputField("Policy Number")
     ClaimNumber = inputField("Claim Number")
-
+    Today= datetime.date.today()
 
     def generateForm():
         base_form_data = {
             'Insured': insureName.get(),
-            'Date_1': str(datetime.date.today()),
+            'Date_1': Today.strftime("%m/%d/%Y"),
             'Address': address.get(),
             'City': city.get(),
             'Zip': zipcode.get(),
